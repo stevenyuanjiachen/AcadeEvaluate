@@ -107,9 +107,11 @@ def main():
     if not os.path.exists(dir):
         os.makedirs(dir)
     citations = get_citations(paper['paperId'])
-    citationURLs = list(citation['openAccessPdf'] for citation in citations if citation['openAccessPdf'] is not None)
-    urlDf = pd.DataFrame(citationURLs)
-    urlDf.to_csv(dir+'citationURLs.csv')
+    citationsDf = pd.DataFrame(citations)
+    citationsDf.to_csv(dir+'citations.csv') # 所有引用该文献的论文的信息
+    pdfURLs = citationsDf.dropna(subset=['openAccessPdf'])['openAccessPdf'].tolist()
+    urlDf = pd.DataFrame(pdfURLs) 
+    urlDf.to_csv(dir+'pdfURLs.csv') # 有公开链接的文献的pdf链接
     citationURLs = urlDf['url'].tolist()
     for result in download_papers_from_urls(citationURLs, directory=dir, timeout=10):  # 设置超时时间为 10 秒
         idx, url, filepath, error = result
