@@ -101,10 +101,11 @@ def download_pdf(session: requests.Session, url: str, filepath: str, timeout: in
 
 
 def main():
-    dir = os.path.dirname(os.path.abspath(__file__)) + '/citationPDFs/'
+    paper = find_paper_by_title()
+    title = paper['title']
+    dir = os.path.dirname(os.path.abspath(__file__)) + f'/{title}_citationPDFs/'
     if not os.path.exists(dir):
         os.makedirs(dir)
-    paper = find_paper_by_title()
     citations = get_citations(paper['paperId'])
     citationURLs = list(citation['openAccessPdf'] for citation in citations if citation['openAccessPdf'] is not None)
     urlDf = pd.DataFrame(citationURLs)
