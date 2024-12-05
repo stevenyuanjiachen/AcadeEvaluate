@@ -72,15 +72,11 @@ def get_citations(paper_id):
 
 
 # 下载 PDF 的函数
-def download_papers_from_urls(urls: list[str], directory: str, user_agent: str = 'requests/2.0.0', timeout: int = 10) -> Generator[tuple[str, Union[str, None, Exception]], None, None]:
-    # 检查保存目录是否存在，不存在则创建
-    if not os.path.exists(directory):
-        os.makedirs(directory)
-    
+def download_papers_from_urls(urls: list[str], directory: str, user_agent: str = 'requests/2.0.0', timeout: int = 10) -> Generator[tuple[str, Union[str, None, Exception]], None, None]:  
     # 使用 Session 复用 TCP 连接
     with requests.Session() as session:
         session.headers.update({'user-agent': user_agent})  # 设置 User-Agent
-        for idx, url in enumerate(urls, 1):
+        for idx, url in enumerate(urls):
             try:
                 # 自动生成文件名
                 filename = os.path.join(directory, f"paper_{idx}.pdf")
@@ -105,12 +101,15 @@ def download_pdf(session: requests.Session, url: str, filepath: str, timeout: in
 
 
 def main():
-    dir = '/Users/Stansfield/Library/CloudStorage/OneDrive-sjtu.edu.cn/24春季课程/深度学习/深度学习大作业/papers/'
+    dir = os.path.dirname(os.path.abspath(__file__)) + '/citationPDFs/'
+    if not os.path.exists(dir):
+        os.makedirs(dir)
     paper = find_paper_by_title()
     citations = get_citations(paper['paperId'])
     citationURLs = list(citation['openAccessPdf'] for citation in citations if citation['openAccessPdf'] is not None)
     urlDf = pd.DataFrame(citationURLs)
     urlDf.to_csv(dir+'citationURLs.csv')
+    citationURLs = urlDf['url'].tolist()
     for result in download_papers_from_urls(citationURLs, directory=dir, timeout=10):  # 设置超时时间为 10 秒
         idx, url, filepath, error = result
         if error:
