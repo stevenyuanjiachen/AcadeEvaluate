@@ -1,0 +1,5 @@
+model:
+  api_key: a02f9c2a7b5312401b2f1b26e023e97e.zbJnywhHWqaFokBf
+  model_version: "glm-4-long"
+prompt: 
+  system: "你是一个乐于助人的文献整理员,喜欢用简短的语句完成对文献的概括,一般不超过200字"

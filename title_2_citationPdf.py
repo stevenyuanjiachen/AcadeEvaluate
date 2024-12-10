@@ -10,12 +10,13 @@ S2_API_KEY = os.environ.get("S2_API_KEY", "")
 def print_papers(papers):
     for idx, paper in enumerate(papers):
         print(
-            f"{idx}  {paper['title']} || {','.join(author['name'] for author in paper['authors'])} || {paper['url']}"
+            f"{idx}  {paper['title']} || {','.join(author['name'] for author in paper['authors'])} || {paper['paperId']}"
         )
 
 
-def find_paper_by_title(query=None, result_limit=10):
+def find_paper_by_title(query=None):
     papers = None
+    result_limit=10
     while not papers:
         if not query:
             query = input("Find papers about what: ")
@@ -40,12 +41,15 @@ def find_paper_by_title(query=None, result_limit=10):
 
         print(f"Found {total} results. Showing up to {result_limit}.")
         papers = results["data"]
-        print_papers(papers)
+        # print_papers(papers)
 
+        return papers
+    '''
     selection = ""
     while not re.fullmatch("\\d+", selection):
         selection = input("Select a paper # to base recommendations on: ")
     return results["data"][int(selection)]
+    '''
 
 
 def get_citation_edges(**req_kwargs):
