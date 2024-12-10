@@ -1,0 +1,13 @@
+name: evaluate
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - python=3.9
+  - requests
+  - pandas
+  - numpy<2
+  - pip
+  - pip:
+    - gradio
+    - zhipuai
