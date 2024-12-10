@@ -1,6 +1,5 @@
 import os
 import requests
-import re
 from typing import Generator, Union
 import pandas as pd
 
@@ -103,7 +102,7 @@ def download_papers_from_urls(
     urls: list[str],
     directory: str,
     user_agent: str = "requests/2.0.0",
-    timeout: int = 10,
+    timeout: int = 5,
     max_downloads: int = 10,
 ) -> Generator[tuple[str, Union[str, None, Exception]], None, None]:
     # 使用 Session 复用 TCP 连接
@@ -121,7 +120,7 @@ def download_papers_from_urls(
                 # 自动生成文件名
                 filename = os.path.join(directory, f"paper_{idx}.pdf")
                 print(f"Downloading {url} to {filename}...")
-                download_pdf(session, url, filename, timeout)
+                download_pdf(session, url, filename, timeout=timeout)
                 pdf_num += 1
                 yield (idx, url, filename, None)  # 返回成功信息
             except requests.exceptions.Timeout:

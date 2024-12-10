@@ -41,7 +41,8 @@ class AcadeEvaluateWeb:
                 self.find_btn = gr.Button("查询")
                 self.clear_btn = gr.Button("清除")
                 self.confirm_btn = gr.Button("确认论文", visible=False)
-
+            
+            # Find button
             self.find_btn.click(
                 fn=self.find_clicked_event,
                 inputs=self.paper_name_input,
@@ -52,11 +53,19 @@ class AcadeEvaluateWeb:
                     self.confirm_btn,
                 ],
             )
+
+            # Confirm button
             self.confirm_btn.click(
                 fn=self.confirm_clicked_event,
                 inputs=self.paper_id_input,
-                outputs=[self.evaluate_output, self.evaluate_output],
+                outputs=self.evaluate_output
             )
+            self.confirm_btn.click(
+                fn=self.show_TextBox,
+                inputs=None,
+                outputs=self.evaluate_output,
+            )
+
         self.web.launch(share=True)
 
     def find_clicked_event(self, query):
@@ -76,13 +85,12 @@ class AcadeEvaluateWeb:
         )
 
     def confirm_clicked_event(self, paper_id: str):
-        if not paper_id.isdigit():
-            return "输入的ID不是数字，请重新输入", gr.update(visible=True)
         paper = self.papers[int(paper_id)]
-
         self.download_citations(paper)
+        
 
-
+    def show_TextBox(self):
+        return gr.update(visible=True)
 
     def format_list(self, list):
         formatted_list = "\n".join([f"{line}" for line in list])
@@ -93,14 +101,24 @@ class AcadeEvaluateWeb:
         citations = get_citations(paper["paperId"])
         print(f"Found {len(citations)} citations.")
 
+        # create a directory for the paper
+        dir = os.path.dirname(os.path.abspath(__file__))
+        dir = os.path.join(dir, "citationPDFs")
+        if not os.path.exists(dir):
+            os.makedirs(dir)
+        # 清空该论文的文件夹
+        for f in os.listdir(dir):
+            os.remove(os.path.join(dir, f))
+
         citationsDf = pd.DataFrame(citations)
-        citationsDf.to_csv(dir + "citations.csv")  # 所有引用该文献的论文的信息
+        citationsDf.to_csv(os.path.join(dir, "citations.csv"))  # 所有引用该文献的论文的信息
         pdfURLs = citationsDf.dropna(subset=["openAccessPdf"])["openAccessPdf"].tolist()
         urlDf = pd.DataFrame(pdfURLs)
-        urlDf.to_csv(dir + "pdfURLs.csv")  # 有公开链接的文献的pdf链接
+        urlDf.to_csv(os.path.join(dir ,"pdfURLs.csv"))  # 有公开链接的文献的pdf链接
         citationURLs = urlDf["url"].tolist()
+
         for result in download_papers_from_urls(
-            citationURLs, directory=dir, timeout=10
+            citationURLs, directory=dir, timeout=5
         ):  # 设置超时时间为 10 秒
             idx, url, filepath, error = result
             if error:
@@ -108,6 +126,7 @@ class AcadeEvaluateWeb:
             else:
                 print(f"{idx+1}/{len(citationURLs)} Downloaded {url} to {filepath}")
         
-        
+    def evaluate_paper(self, paper):
+        print(paper)
 
 AcadeEvaluateWeb()
