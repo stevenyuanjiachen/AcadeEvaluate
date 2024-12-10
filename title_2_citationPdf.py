@@ -40,6 +40,9 @@ def get_citation_edges(**req_kwargs):
     """This helps with API endpoints that involve paging."""
     page_size = 1000
     offset = 0
+    total_results = 0
+    max_results = 20
+
     while True:
         req_kwargs.setdefault('params', dict())
         req_kwargs['params']['limit'] = page_size
@@ -49,7 +52,12 @@ def get_citation_edges(**req_kwargs):
 
         page = rsp.json()["data"]
         for element in page:
-            yield element
+            # 只返回有可下载 PDF 的论文
+            if 'openAccessPdf' in element and element['openAccessPdf']:
+                yield element
+                total_results += 1
+                if total_results >= max_results:
+                    return
 
         if len(page) < page_size:
             break  # no more pages
@@ -101,12 +109,18 @@ def download_pdf(session: requests.Session, url: str, filepath: str, timeout: in
 
 
 def main():
+
+    # get the paper by title
     paper = find_paper_by_title()
     title = paper['title']
     dir = os.path.dirname(os.path.abspath(__file__)) + f'/{title}_citationPDFs/'
     if not os.path.exists(dir):
         os.makedirs(dir)
+    
+    # get the paper's citation
     citations = get_citations(paper['paperId'])
+    print(f"Found {len(citations)} citations.")
+
     citationsDf = pd.DataFrame(citations)
     citationsDf.to_csv(dir+'citations.csv') # 所有引用该文献的论文的信息
     pdfURLs = citationsDf.dropna(subset=['openAccessPdf'])['openAccessPdf'].tolist()
