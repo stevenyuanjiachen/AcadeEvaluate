@@ -1,7 +1,9 @@
 import os
 import requests
-from typing import Generator, Union
+from typing import Generator, Union, List
 import pandas as pd
+import re
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 S2_API_KEY = os.environ.get("S2_API_KEY", "")
 
@@ -13,7 +15,7 @@ def print_papers(papers):
         )
 
 
-def find_paper_by_title(query=None):
+def find_paper_by_title(query=None, select=False):
     papers = None
     result_limit=10
     while not papers:
@@ -41,14 +43,14 @@ def find_paper_by_title(query=None):
         print(f"Found {total} results. Showing up to {result_limit}.")
         papers = results["data"]
         # print_papers(papers)
-
-        return papers
-    '''
+        if not select:
+            return papers
+    
     selection = ""
     while not re.fullmatch("\\d+", selection):
         selection = input("Select a paper # to base recommendations on: ")
     return results["data"][int(selection)]
-    '''
+
 
 
 def get_citation_edges(**req_kwargs):
@@ -98,7 +100,7 @@ def get_citations(paper_id):
 
 
 # 下载 PDF 的函数
-def download_papers_from_urls(
+def download_papers_from_urls_singlecore(
     urls: list[str],
     directory: str,
     user_agent: str = "requests/2.0.0",
@@ -131,6 +133,56 @@ def download_papers_from_urls(
                 yield (idx, url, None, e)  # 返回其他错误信息
 
 
+# 下载 PDF 的函数
+def download_papers_from_urls(
+    urls: List[str],
+    directory: str,
+    user_agent: str = "requests/2.0.0",
+    timeout: int = 5,
+    max_downloads: int = 100,
+    max_threads: int = 8  # 限制最大线程数
+) -> Generator[tuple[int, str, Union[str, None, Exception]], None, None]:
+    # 使用 Session 复用 TCP 连接
+    pdf_num = 0
+    with requests.Session() as session:
+        session.headers.update({"user-agent": user_agent})  # 设置 User-Agent
+
+        # 使用 ThreadPoolExecutor 并行下载
+        with ThreadPoolExecutor(max_workers=max_threads) as executor:
+            futures = []
+            for idx, url in enumerate(urls):
+                if pdf_num >= max_downloads:
+                    print(f"Downloaded {pdf_num} papers. Stopping...")
+                    break
+
+                # 为每个下载任务提交一个线程
+                futures.append(executor.submit(download_pdf_task, session, url, directory, idx, timeout))
+
+            # 等待所有任务完成并处理结果
+            for future in as_completed(futures):
+                idx, url, filename, error = future.result()
+                if error:
+                    yield (idx, url, None, error)  # 返回错误信息
+                else:
+                    pdf_num += 1
+                    yield (idx, url, filename, None)  # 返回成功信息
+
+# 下载任务函数
+def download_pdf_task(session: requests.Session, url: str, directory: str, idx: int, timeout: int) -> tuple[int, str, Union[str, None, Exception]]:
+    try:
+        # 自动生成文件名
+        filename = os.path.join(directory, f"paper_{idx}.pdf")
+        print(f"Downloading {url} to {filename}...")
+        download_pdf(session, url, filename, timeout=timeout)
+        return (idx, url, filename, None)  # 返回成功信息
+    except requests.exceptions.Timeout:
+        print(f"Timeout occurred while downloading {url}. Skipping...")
+        return (idx, url, None, "Timeout")  # 返回超时信息
+    except Exception as e:
+        print(f"Failed to download {url}: {e}")
+        return (idx, url, None, e)  # 返回其他错误信息
+
+
 # 下载单个 PDF 的函数
 def download_pdf(session: requests.Session, url: str, filepath: str, timeout: int):
     # 使用流式响应避免将整个文件加载到内存中
@@ -144,7 +196,7 @@ def download_pdf(session: requests.Session, url: str, filepath: str, timeout: in
 def main():
 
     # get the paper by title
-    paper = find_paper_by_title()
+    paper = find_paper_by_title(query=None, select=True)
     title = paper["title"]
     dir = os.path.dirname(os.path.abspath(__file__)) + f"/{title}_citationPDFs/"
     if not os.path.exists(dir):
