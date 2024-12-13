@@ -1,5 +1,4 @@
 from zhipuai import ZhipuAI
-from client import client
 import os
 def file_list(client, purpose="file-extract"):
     """

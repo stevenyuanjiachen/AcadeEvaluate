@@ -1,7 +1,8 @@
 from zhipuai import ZhipuAI
 from pathlib import Path
 import json
-
+import os
+#---------------------------用于上传pdf到智谱，返回文件id-----------------------------------
 def upload(client, file_path):
     """
     上传文件
@@ -25,3 +26,21 @@ def upload(client, file_path):
     else:
         raise ValueError("file_path 参数必须是字符串或列表")
 
+def upload_folder(client, folder_path):
+    """
+    上传文件夹中的所有文件
+
+    参数:
+    client: 客户端实例
+    folder_path: 文件夹路径
+
+    返回:
+    上传文件的ID列表
+    """
+    file_ids = []
+    for root, _, files in os.walk(folder_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            file_id = upload(client, file_path)
+            file_ids.append(file_id)
+    return file_ids

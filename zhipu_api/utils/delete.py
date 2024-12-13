@@ -1,5 +1,4 @@
 from zhipuai import ZhipuAI
-from client import client
 
 def delete(client, id):
     """
