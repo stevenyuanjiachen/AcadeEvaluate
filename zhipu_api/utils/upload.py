@@ -1,7 +1,7 @@
 from zhipuai import ZhipuAI
 from pathlib import Path
-import json
 import os
+
 #---------------------------用于上传pdf到智谱，返回文件id-----------------------------------
 def upload(client, file_path):
     """
@@ -28,7 +28,7 @@ def upload(client, file_path):
 
 def upload_folder(client, folder_path):
     """
-    上传文件夹中的所有文件
+    上传文件夹中的所有PDF文件
 
     参数:
     client: 客户端实例
@@ -40,7 +40,8 @@ def upload_folder(client, folder_path):
     file_ids = []
     for root, _, files in os.walk(folder_path):
         for file in files:
-            file_path = os.path.join(root, file)
-            file_id = upload(client, file_path)
-            file_ids.append(file_id)
+            if file.lower().endswith('.pdf'):
+                file_path = os.path.join(root, file)
+                file_id = upload(client, file_path)
+                file_ids.append(file_id)
     return file_ids

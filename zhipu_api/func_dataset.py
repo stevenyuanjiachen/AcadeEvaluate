@@ -6,10 +6,10 @@ from pathlib import Path
 import json
 from zhipuai import ZhipuAI
 #---------------导入zhipu的api函数---------------------------------------------------
-from utils.delete import delete
-from utils.zhipu_com import getanswer_com
-from utils.upload import upload, upload_folder
-from utils.file_list import file_list
+from zhipu_api.utils.delete import delete
+from zhipu_api.utils.zhipu_com import getanswer_com
+from zhipu_api.utils.upload import upload, upload_folder
+from zhipu_api.utils.file_list import file_list
 #--------------------等待完成的文件内容提取函数，输入为pdf文件提取的字符内容，输出为你想要输入给LLM的内容，目前采用完全输出（identity)-------------------------------------------------------
 def pdf_process(content):
     """
@@ -35,8 +35,9 @@ def create_dataset_folder(client, pdf_file_path, pdf_folder_path, db_folder_abso
     list_file_path = os.path.join(target_folder_path, 'list.txt')
     with open(list_file_path, 'w') as list_file:
         # 上传pdf_file_path并写入id
-        pdf_file_id = upload(client, pdf_file_path)
-        list_file.write(f'{pdf_file_id}\n')
+        if pdf_file_path is not None:
+            pdf_file_id = upload(client, pdf_file_path)
+            list_file.write(f'{pdf_file_id}\n')
         
         # 上传pdf_folder_path并写入id列表
         pdf_folder_ids = upload_folder(client, pdf_folder_path)
@@ -62,8 +63,8 @@ def delete_dataset_folder(client, db_folder_absolute_path, specified_folder_name
     for id in id_list:
         delete(client, id=id)
     # 删除指定文件夹
-    target_folder_path = os.path.join(db_folder_absolute_path, specified_folder_name)
-    shutil.rmtree(target_folder_path)  # 修改为shutil.rmtree
+    #target_folder_path = os.path.join(db_folder_absolute_path, specified_folder_name)
+    #shutil.rmtree(target_folder_path)  # 修改为shutil.rmtree
 
 def get_dataset_content(client, db_folder_absolute_path, specified_folder_name):
     """
@@ -137,10 +138,10 @@ def delete_id(client,id,):
 if __name__ == '__main__':
     # ...existing code...
     client = ZhipuAI(api_key='c78468f91461f654f4e4d882f9bc5481.6TcFNbpFK7KV1DtD')
-    pdf_file_path = "C:/Users/kaich/Desktop/二值化论文整理/one_bit_LLM/OneBit.pdf"
+    pdf_file_path ="C:/Users/kaich/Desktop/二值化论文整理/one_bit_LLM/OneBit.pdf"
     pdf_folder_path = 'C:/Users/kaich/Desktop/二值化论文整理/one_bit_LLM'
-    db_folder_absolute_path = 'C:/Users/kaich/Desktop/ZhipuLLM/dataset'
-    specified_folder_name = 'dataset_0'
+    db_folder_absolute_path = 'C:/Users/kaich/Desktop/new/AcadeEvaluate/dataset'
+    specified_folder_name = '0'#'BiLLMPushingtheLimitofPost-TrainingQuantizationforLLMs'
     #create_dataset_folder(client, pdf_file_path, pdf_folder_path, db_folder_absolute_path, specified_folder_name)
     #delete_dataset_folder(client, db_folder_absolute_path,specified_folder_name)
     # 测试get_file_content功能
@@ -149,11 +150,11 @@ if __name__ == '__main__':
     filenames = get_filenames(filelist)
     print(filelist)
     delete(client, id=get_file_id(filelist))
-    filelist = get_filelist(client)
-    print(get_filenames(filelist))
+    #filelist = get_filelist(client)
+    #print(get_filenames(filelist))
     #content = get_dataset_content(client,db_folder_absolute_path,specified_folder_name )
     #with open('test.txt', 'w', encoding='utf-8') as output_file:
-     #   output_file.write(content)
+    #    output_file.write(content)
     #response=getanswer_com(client,content,system="你是一个热心的文件整理员",version="glm-4-long")
     #with open('output.txt', 'w', encoding='utf-8') as output_file:
      #   output_file.write(response)
