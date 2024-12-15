@@ -14,15 +14,19 @@ def upload(client, file_path):
     返回:
     上传文件的ID或ID列表
     """
-    if isinstance(file_path, str):
-        file_object = client.files.create(file=Path(file_path), purpose="file-extract")
-        return file_object.id
-    elif isinstance(file_path, list):
-        file_ids = []
-        for path in file_path:
-            file_object = client.files.create(file=Path(path), purpose="file-extract")
-            file_ids.append(file_object.id)
-        return file_ids
+    try:
+        if isinstance(file_path, str):
+            file_object = client.files.create(file=Path(file_path), purpose="file-extract")
+            return file_object.id
+        elif isinstance(file_path, list):
+            file_ids = []
+            for path in file_path:
+                file_object = client.files.create(file=Path(path), purpose="file-extract")
+                file_ids.append(file_object.id)
+            return file_ids
+    except Exception as e:
+        print(f"上传文件失败: {e}")
+        return None
     else:
         raise ValueError("file_path 参数必须是字符串或列表")
 
@@ -43,5 +47,6 @@ def upload_folder(client, folder_path):
             if file.lower().endswith('.pdf'):
                 file_path = os.path.join(root, file)
                 file_id = upload(client, file_path)
-                file_ids.append(file_id)
+                if file_id != None:
+                    file_ids.append(file_id)
     return file_ids

@@ -139,7 +139,7 @@ def download_papers_from_urls(
     directory: str,
     user_agent: str = "requests/2.0.0",
     timeout: int = 5,
-    max_downloads: int = 100,
+    max_downloads: int = 10,
     max_threads: int = 8  # 限制最大线程数
 ) -> Generator[tuple[int, str, Union[str, None, Exception]], None, None]:
     # 使用 Session 复用 TCP 连接
@@ -147,14 +147,13 @@ def download_papers_from_urls(
     with requests.Session() as session:
         session.headers.update({"user-agent": user_agent})  # 设置 User-Agent
 
+        if len(urls) > max_downloads:
+            urls = urls[:max_downloads]  # 限制下载数量
+        
         # 使用 ThreadPoolExecutor 并行下载
         with ThreadPoolExecutor(max_workers=max_threads) as executor:
             futures = []
             for idx, url in enumerate(urls):
-                if pdf_num >= max_downloads:
-                    print(f"Downloaded {pdf_num} papers. Stopping...")
-                    break
-
                 # 为每个下载任务提交一个线程
                 futures.append(executor.submit(download_pdf_task, session, url, directory, idx, timeout))
 
