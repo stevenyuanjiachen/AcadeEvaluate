@@ -24,15 +24,13 @@ class AcadeEvaluateWeb:
         dir = os.path.dirname(os.path.abspath(__file__))
 
         # load config
-        config_file = os.path.join(dir, "config\\config_test.yaml")
+        config_file = os.path.join(dir, "config/config.yaml")
         with open(config_file, "r", encoding="utf-8") as file:
             config = yaml.safe_load(file)
 
         # LLM client
         self.client = client(config["model"]["api_key"])
-        self.system = config["prompt"]["system"]
         self.version = config["model"]["model_version"]
-        self.question = config["prompt"]["question"]
         
         file_list = self.client.files.list()
         for file in file_list.data:
@@ -165,12 +163,7 @@ class AcadeEvaluateWeb:
             client= self.client,
             pdf_dir= self.download_path
         )
-        print(content)
-        content += "文章标题是"
-        content += f"\n\n{self.question}"
-        content += self.article_title
-        print(self.article_title)
-        answer = getanswer_com(self.client, content, self.system, self.version)
+        answer = getanswer_com(self.client, content,  self.version)
         delete_dataset_folder(self.client, self.download_path)
         return answer
 
