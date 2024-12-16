@@ -51,7 +51,7 @@ class AcadeEvaluateWeb:
             self.paper_recommend_output = gr.Radio(
                 label="查询到的论文", interactive=True, choices=[]
             )
-            self.evaluate_output = gr.Textbox(label="评价结果", visible=False)
+            self.evaluate_output = gr.Markdown(label="评价结果", visible=False)
 
             user_choice_output = gr.Textbox(label="Your Choice", interactive=False)
             self.confirm_btn = gr.Button("确认论文", visible=False)
